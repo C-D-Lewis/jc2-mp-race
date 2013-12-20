@@ -5,6 +5,8 @@ serverColour = Color(255, 200, 200, 200)
 -- Globals
 contenders = {}	-- Players in the race (i, name)
 wins = {}	-- Number of wins (name, wins)
+waypoints = {}	-- Race waypoint Vector3s
+checkpoints = {} -- Checkpoint objects
 
 -- Race status
 raceInProgress = false
@@ -26,6 +28,8 @@ onModuleLoad = function(args)
 	announce("Race Module Reloaded.", announceColour)
 	print("Race setup complete.")
 	print("---------------------------------------")
+
+	testCode()
 end
 
 -- When a player joins the game
@@ -103,6 +107,8 @@ onPlayerChat = function(args)
 	if message == "/startrace" then
 		-- If race is not in progress
 		if raceInProgress == false then
+			createCheckpoints("waypoints.txt")
+
 			-- If enough players entered
 			if #contenders > 1 then
 				announce(playerName .. " started the race!", announceColour)
@@ -149,6 +155,48 @@ startRace = function()
 	announce("Race would happen here.", serverColour)
 
 	raceInProgress = false
+end
+
+-- Read checkpoints from file at path and turn into Vector3s and Checkpoint objects
+createCheckpoints = function(path)
+	-- Open file
+	local file = io.open(path, "r")
+
+	-- Index
+	local index = 1
+
+	-- For whole file
+	while true do
+		-- Get next line
+		local line = file:read("*line")
+
+		-- While file has lines
+		if line != nil then
+			-- Get each element
+			local words = line:split(", ")
+
+			if words != nil and #words == 5 then
+				-- Store Vector3
+				waypoints[index] = Vector3(tonumber(words[1]), tonumber(words[3]), tonumber(words[5]))
+				
+				-- Create checkpoint
+				checkpoints[index] = Checkpoint.Create(waypoints[index])
+				checkpoints[index]:SetText(tostring(index))
+
+				print("Waypoint " .. index  .. ": " .. tostring(waypoints[index]))
+
+				index = index + 1
+			else
+				print("ERROR: Reading waypoint " .. line)
+				print(#words .. " words")
+			end
+		else
+			print("End of file.")
+			break
+		end
+	end
+
+	file:close()
 end
 
 -- Add a player to the race
@@ -224,6 +272,13 @@ savePosition = function(position)
 	-- Finish
 	file:flush()
 	file:close() 
+end
+
+-- Read all waypoints
+
+-- Any testing code
+testCode = function()
+
 end
 
 --------------------------------------- Main Execution ---------------------------------------
